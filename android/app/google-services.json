@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "59463060813",
+    "project_id": "th3-vpp",
+    "storage_bucket": "th3-vpp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:59463060813:android:600d5c3abedb6f8226bb04",
+        "android_client_info": {
+          "package_name": "com.example.th3_app_sanphamvpp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDB7JZ9PDjbwwCkYYf2VW8LZTA4MBzKPMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
