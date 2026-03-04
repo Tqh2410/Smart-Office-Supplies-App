@@ -45,6 +45,7 @@ class _ProductListPageState extends State<ProductListPage> {
     final created = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) {
         final nameController = TextEditingController();
         final priceController = TextEditingController();
@@ -55,130 +56,141 @@ class _ProductListPageState extends State<ProductListPage> {
         final formKey = GlobalKey<FormState>();
         bool submitting = false;
 
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            top: 16,
-          ),
-          child: StatefulBuilder(
-            builder: (context, setSheetState) {
-              Future<void> submit() async {
-                if (submitting) return;
-                if (!(formKey.currentState?.validate() ?? false)) return;
-                setSheetState(() => submitting = true);
-                try {
-                  final price = double.tryParse(priceController.text.trim()) ?? 0;
-                  await _service.addProduct(
-                    Product(
-                      id: '',
-                      name: nameController.text.trim(),
-                      price: price,
-                      description: descriptionController.text.trim(),
-                      imageUrl: imageUrlController.text.trim(),
-                      inStock: inStock,
-                      unit: unitController.text.trim(),
-                    ),
-                  );
-                  if (context.mounted) Navigator.pop(context, true);
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString())),
+        final viewInsets = MediaQuery.of(context).viewInsets;
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: viewInsets.bottom + 16,
+              top: 16,
+            ),
+            child: StatefulBuilder(
+              builder: (context, setSheetState) {
+                Future<void> submit() async {
+                  if (submitting) return;
+                  if (!(formKey.currentState?.validate() ?? false)) return;
+                  setSheetState(() => submitting = true);
+                  try {
+                    final price = double.tryParse(priceController.text.trim()) ?? 0;
+                    await _service.addProduct(
+                      Product(
+                        id: '',
+                        name: nameController.text.trim(),
+                        price: price,
+                        description: descriptionController.text.trim(),
+                        imageUrl: imageUrlController.text.trim(),
+                        inStock: inStock,
+                        unit: unitController.text.trim(),
+                      ),
                     );
+                    if (context.mounted) Navigator.pop(context, true);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
+                  } finally {
+                    setSheetState(() => submitting = false);
                   }
-                } finally {
-                  setSheetState(() => submitting = false);
                 }
-              }
 
-              return Form(
-                key: formKey,
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    Text(
-                      'Thêm sản phẩm',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tên sản phẩm',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Nhập tên' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: priceController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Giá (VNĐ)',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Nhập giá';
-                        return double.tryParse(v.trim()) == null
-                            ? 'Giá không hợp lệ'
-                            : null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: descriptionController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Mô tả',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: imageUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Ảnh (URL)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: unitController,
-                      decoration: const InputDecoration(
-                        labelText: 'Đơn vị',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
+                return SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Còn hàng'),
-                        const SizedBox(width: 12),
-                        Switch(
-                          value: inStock,
-                          onChanged: (v) => setSheetState(() => inStock = v),
+                        Text(
+                          'Thêm sản phẩm',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: nameController,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Tên sản phẩm',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) =>
+                              (v == null || v.trim().isEmpty) ? 'Nhập tên' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: priceController,
+                          textInputAction: TextInputAction.next,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Giá (VNĐ)',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Nhập giá';
+                            return double.tryParse(v.trim()) == null
+                                ? 'Giá không hợp lệ'
+                                : null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: descriptionController,
+                          textInputAction: TextInputAction.next,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Mô tả',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: imageUrlController,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Ảnh (URL)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: unitController,
+                          textInputAction: TextInputAction.done,
+                          decoration: const InputDecoration(
+                            labelText: 'Đơn vị (cái, hộp, quyển...)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Text('Còn hàng'),
+                            const SizedBox(width: 12),
+                            Switch(
+                              value: inStock,
+                              onChanged: (v) => setSheetState(() => inStock = v),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: submitting ? null : submit,
+                          icon: submitting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.save),
+                          label: Text(submitting ? 'Đang lưu...' : 'Lưu sản phẩm'),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: submitting ? null : submit,
-                      icon: submitting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.save),
-                      label: Text(submitting ? 'Đang lưu...' : 'Lưu sản phẩm'),
-                    ),
-                  ],
-                ),
-              );
-            },
+                  ),
+                );
+              },
+            ),
           ),
         );
       },
@@ -198,6 +210,7 @@ class _ProductListPageState extends State<ProductListPage> {
     final updated = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) {
         final nameController = TextEditingController(text: product.name);
         final priceController = TextEditingController(
@@ -210,130 +223,141 @@ class _ProductListPageState extends State<ProductListPage> {
         final formKey = GlobalKey<FormState>();
         bool submitting = false;
 
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            top: 16,
-          ),
-          child: StatefulBuilder(
-            builder: (context, setSheetState) {
-              Future<void> submit() async {
-                if (submitting) return;
-                if (!(formKey.currentState?.validate() ?? false)) return;
-                setSheetState(() => submitting = true);
-                try {
-                  final price = double.tryParse(priceController.text.trim()) ?? 0;
-                  await _service.updateProduct(
-                    Product(
-                      id: product.id,
-                      name: nameController.text.trim(),
-                      price: price,
-                      description: descriptionController.text.trim(),
-                      imageUrl: imageUrlController.text.trim(),
-                      inStock: inStock,
-                      unit: unitController.text.trim(),
-                    ),
-                  );
-                  if (context.mounted) Navigator.pop(context, true);
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString())),
+        final viewInsets = MediaQuery.of(context).viewInsets;
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: viewInsets.bottom + 16,
+              top: 16,
+            ),
+            child: StatefulBuilder(
+              builder: (context, setSheetState) {
+                Future<void> submit() async {
+                  if (submitting) return;
+                  if (!(formKey.currentState?.validate() ?? false)) return;
+                  setSheetState(() => submitting = true);
+                  try {
+                    final price = double.tryParse(priceController.text.trim()) ?? 0;
+                    await _service.updateProduct(
+                      Product(
+                        id: product.id,
+                        name: nameController.text.trim(),
+                        price: price,
+                        description: descriptionController.text.trim(),
+                        imageUrl: imageUrlController.text.trim(),
+                        inStock: inStock,
+                        unit: unitController.text.trim(),
+                      ),
                     );
+                    if (context.mounted) Navigator.pop(context, true);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
+                  } finally {
+                    setSheetState(() => submitting = false);
                   }
-                } finally {
-                  setSheetState(() => submitting = false);
                 }
-              }
 
-              return Form(
-                key: formKey,
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    Text(
-                      'Sửa sản phẩm',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tên sản phẩm',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Nhập tên' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: priceController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Giá (VNĐ)',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Nhập giá';
-                        return double.tryParse(v.trim()) == null
-                            ? 'Giá không hợp lệ'
-                            : null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: descriptionController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Mô tả',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: imageUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Ảnh (URL)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: unitController,
-                      decoration: const InputDecoration(
-                        labelText: 'Đơn vị (cái, hộp, quyển...)',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
+                return SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Còn hàng'),
-                        const SizedBox(width: 12),
-                        Switch(
-                          value: inStock,
-                          onChanged: (v) => setSheetState(() => inStock = v),
+                        Text(
+                          'Sửa sản phẩm',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: nameController,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Tên sản phẩm',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) =>
+                              (v == null || v.trim().isEmpty) ? 'Nhập tên' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: priceController,
+                          textInputAction: TextInputAction.next,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Giá (VNĐ)',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Nhập giá';
+                            return double.tryParse(v.trim()) == null
+                                ? 'Giá không hợp lệ'
+                                : null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: descriptionController,
+                          textInputAction: TextInputAction.next,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Mô tả',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: imageUrlController,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Ảnh (URL)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: unitController,
+                          textInputAction: TextInputAction.done,
+                          decoration: const InputDecoration(
+                            labelText: 'Đơn vị',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Text('Còn hàng'),
+                            const SizedBox(width: 12),
+                            Switch(
+                              value: inStock,
+                              onChanged: (v) => setSheetState(() => inStock = v),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: submitting ? null : submit,
+                          icon: submitting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.save),
+                          label: Text(submitting ? 'Đang lưu...' : 'Cập nhật'),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: submitting ? null : submit,
-                      icon: submitting
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.save),
-                      label: Text(submitting ? 'Đang lưu...' : 'Cập nhật'),
-                    ),
-                  ],
-                ),
-              );
-            },
+                  ),
+                );
+              },
+            ),
           ),
         );
       },
